@@ -4,6 +4,7 @@ import morgan from 'morgan';
 import config from './config';
 import cors from 'cors';
 import { connect } from './utils/db';
+import { signup, signin, protect } from './utils/auth/auth';
 
 import { RESOURCES } from './resources';
 import routing from './middleware/routing/routing';
@@ -17,6 +18,10 @@ app.use(json());
 app.use(urlencoded({ extended: true }));
 app.use(morgan('dev'));
 
+app.post('/signup', signup);
+app.post('/signin', signin);
+
+app.use('/api', protect);
 app.use(routing(RESOURCES.ROUTERS));
 
 export const start = async (): Promise<void> => {
