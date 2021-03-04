@@ -1,10 +1,10 @@
-import { getOne, getMany, createOne, updateOne, deleteOne } from '../crud/crud';
-import { List } from '../../resources/list/list.model';
-import { User } from '../../resources/user/user.model';
+import { getOne, getMany, createOne, updateOne, deleteOne } from '../crud';
 import mongoose from 'mongoose';
+import { List } from '../../../resources/list/list.model';
+import { User } from '../../../resources/user/user.model';
 
 describe('crud controllers', () => {
-  describe('getOne', async () => {
+  describe('getOne', () => {
     test('finds by authenticated user and id', async () => {
       expect.assertions(2);
 
@@ -29,7 +29,6 @@ describe('crud controllers', () => {
           expect(result.data._id.toString()).toBe(list._id.toString());
         },
       };
-
       await getOne(List)(req, res);
     });
 
@@ -49,7 +48,7 @@ describe('crud controllers', () => {
 
       const res = {
         status(status) {
-          expect(status).toBe(400);
+          expect(status).toBe(404);
           return this;
         },
         end() {

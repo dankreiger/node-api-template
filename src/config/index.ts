@@ -1,6 +1,7 @@
 import devConfig from './dev';
 import testConfig from './testing';
 import prodConfig from './prod';
+import _merge from 'lodash.merge';
 
 const env = process.env.NODE_ENV || 'development';
 
@@ -47,4 +48,4 @@ switch (env) {
     envConfig = prodConfig;
 }
 
-export default { ...baseConfig, ...envConfig };
+export default _merge(baseConfig, envConfig);

@@ -15,7 +15,6 @@
       "config/*": ["config/*"],
       "middleware/*": ["middleware/*"],
       "resources/*": ["resources/*"],
-      "server": ["server.ts"],
       "utils/*": ["utils/*"]
     },
     "allowSyntheticDefaultImports": true,
@@ -24,5 +23,5 @@
     "forceConsistentCasingInFileNames": true
   },
   "include": ["./src/*"],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "./src/test-db-*"]
 }

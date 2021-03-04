@@ -1,8 +1,8 @@
 import { newToken, verifyToken, signup, signin, protect } from '../auth';
 import mongoose from 'mongoose';
 import jwt from 'jsonwebtoken';
-import config from '../../config';
-import { User } from '../../resources/user/user.model';
+import config from '../../../config';
+import { User } from '../../../resources/user/user.model';
 
 describe('Authentication:', () => {
   describe('newToken', () => {
@@ -27,7 +27,6 @@ describe('Authentication:', () => {
   describe('signup', () => {
     test('requires email and password', async () => {
       expect.assertions(2);
-
       const req = { body: {} };
       const res = {
         status(status) {
@@ -36,6 +35,7 @@ describe('Authentication:', () => {
         },
         send(result) {
           expect(typeof result.message).toBe('string');
+          return this;
         },
       };
 
@@ -55,6 +55,7 @@ describe('Authentication:', () => {
           let user = await verifyToken(result.token);
           user = await User.findById(user.id).lean().exec();
           expect(user.email).toBe('hello@hello.com');
+          return this;
         },
       };
 
@@ -121,6 +122,7 @@ describe('Authentication:', () => {
 
     test('creates new token', async () => {
       expect.assertions(2);
+
       const fields = {
         email: 'hello@me.com',
         password: 'yoyoyo',
@@ -146,20 +148,22 @@ describe('Authentication:', () => {
 
   describe('protect', () => {
     test('looks for Bearer token in headers', async () => {
-      expect.assertions(2);
-
       const req = { headers: {} };
       const res = {
         status(status) {
           expect(status).toBe(401);
           return this;
         },
+        send(result) {
+          expect(typeof result.message).toBe('string');
+          return this;
+        },
         end() {
           expect(true).toBe(true);
         },
       };
-
-      await protect(req, res);
+      const next = () => {};
+      await protect(req, res, next);
     });
 
     test('token must have correct prefix', async () => {
@@ -171,15 +175,22 @@ describe('Authentication:', () => {
           expect(status).toBe(401);
           return this;
         },
+        send(result) {
+          expect(typeof result.message).toBe('string');
+          return this;
+        },
         end() {
           expect(true).toBe(true);
         },
       };
 
-      await protect(req, res);
+      const next = () => {};
+      await protect(req, res, next);
     });
 
     test('must be a real user', async () => {
+      expect.assertions(2);
+
       const token = `Bearer ${newToken({ id: mongoose.Types.ObjectId() })}`;
       const req = { headers: { authorization: token } };
 
@@ -188,15 +199,22 @@ describe('Authentication:', () => {
           expect(status).toBe(401);
           return this;
         },
+        send(result) {
+          expect(typeof result.message).toBe('string');
+          return this;
+        },
         end() {
           expect(true).toBe(true);
         },
       };
 
-      await protect(req, res);
+      const next = () => {};
+      await protect(req, res, next);
     });
 
     test('finds user form token and passes on', async () => {
+      expect.assertions(2);
+
       const user = await User.create({
         email: 'hello@hello.com',
         password: '1234',
@@ -207,7 +225,7 @@ describe('Authentication:', () => {
       const next = () => {};
       await protect(req, {}, next);
       expect(req.user._id.toString()).toBe(user._id.toString());
-      expect(req.user).not.toHaveProperty('password');
+      expect(req.user.password).toBeUndefined();
     });
   });
 });

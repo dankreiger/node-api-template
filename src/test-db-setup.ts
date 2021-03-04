@@ -1,70 +1,32 @@
 /* eslint-disable jest/no-done-callback */
-import mongoose, { Document, Error, Model } from 'mongoose';
-import cuid from 'cuid';
-import { Item } from './resources/item/item.model';
-import { List } from './resources/list/list.model';
-import { User } from './resources/user/user.model';
-import _map from 'lodash.map';
+import mongoose from 'mongoose';
 
-declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
-  namespace NodeJS {
-    interface Global {
-      newId(): mongoose.Types.ObjectId;
-    }
-  }
-}
+import { MongoMemoryServer } from 'mongodb-memory-server';
 
-const models: Record<string, Model<Document>> = { User, List, Item };
-const url =
-  process.env.MONGODB_URI ||
-  process.env.DB_URL ||
-  'mongodb://localhost:27017/tipe-devapi-testing';
+let mongo: InstanceType<typeof MongoMemoryServer>;
 
-mongoose.set('useCreateIndex', true);
+beforeAll(async () => {
+  mongo = new MongoMemoryServer();
+  const mongoUri = await mongo.getUri();
 
-global.newId = () => {
-  return mongoose.Types.ObjectId();
-};
-
-const deleteMany = (collection: mongoose.Collection): Promise<void> =>
-  new Promise((resolve, reject) => {
-    collection.deleteMany((err: Error) => {
-      if (err) return reject(err);
-      resolve();
-    });
+  await mongoose.connect(mongoUri, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    useCreateIndex: true,
+    useFindAndModify: false,
   });
-
-beforeEach(async (done) => {
-  const db = cuid();
-  function clearDB() {
-    return Promise.all(_map(mongoose.connection.collections, deleteMany));
-  }
-
-  if (mongoose.connection.readyState === 0) {
-    try {
-      await mongoose.connect(url + db, {
-        useNewUrlParser: true,
-        autoIndex: true,
-        useUnifiedTopology: true,
-      });
-      await clearDB();
-      await Promise.all(Object.keys(models).map((name) => models[name].init()));
-    } catch (e) {
-      console.log('connection error');
-      console.error(e);
-      throw e;
-    }
-  } else {
-    await clearDB();
-  }
-  done();
 });
-afterEach(async (done) => {
-  await mongoose.connection.db.dropDatabase();
-  await mongoose.disconnect();
-  return done();
+
+beforeEach(async () => {
+  jest.clearAllMocks();
+  const collections = await mongoose.connection.db.collections();
+
+  for (const collection of collections) {
+    await collection.deleteMany({});
+  }
 });
-afterAll((done) => {
-  return done();
+
+afterAll(async () => {
+  await mongoose.connection.close();
+  await mongo.stop();
 });
